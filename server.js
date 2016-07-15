@@ -8,32 +8,38 @@ app.use(parser.json());
 
 
 // ============= POST FUNCTION =============//
-app.post('/list', function(req, res){
-var body = _.pick(req.body, description, completed, due, priority);
 var itemID = 0;
-function errorStatus(){
-    return res.status(400).send();
+
+app.post('/list', function(req, res){
+var body = _.pick(req.body, 'description', 'completed','due', 'priority');
+function errorStatus(issue){
+    return res.status(400).send(issue);
   }
 
 //validate data types, send a 400 error if bad data
-if(body.hasOwnProperty('completed') && !_.isBOOLEAN(body.completed) || body.description.trim().length === 0){
-  return errorStatus();
+if(body.hasOwnProperty('completed') && !_.isBoolean(body.completed) || body.description.trim().length === 0){
+  return errorStatus("Something is wrong with completed");
+} else if(!body.hasOwnProperty('completed')){
+  body.completed = false;
 }
-if(body.hasOwnProperty('dateComplete') && !_.isDate(body.dateComplete)){
-  return errorStatus();
+// if(body.hasOwnProperty('dateComplete') && !_.isDate(body.dateComplete)){
+//   return errorStatus("Something is wrong with dateComplete");
+// }
+if(!body.hasOwnProperty('description') || !_.isString(body.description)){
+  return errorStatus("Something is wrong with description");
 }
-if(!body.hasOwnProperty('description') || !_.isSTRING(body.description)){
-  return errorStatus();
-}
-if(body.hasOwnProperty('due') && !_.isDate(body.due)){
-  return errorStatus();
-}
+if(body.hasOwnProperty('due') && !_.isString(body.due)){
+  return errorStatus("Something is wrong with due");
+} 
 if (body.hasOwnProperty('priority') && !_.isNumber(body.priority)){
-  return errorStatus();
+  return errorStatus("Something is wrong with priority");
+} else if(!body.hasOwnProperty('priority')){
+  body.priority = 2; //regular priority
 }
 
 body.id = itemID;
-itemID ++;
+list.push(body);
+itemID++;
 
 res.json(body);
 
@@ -93,3 +99,15 @@ app.get('/list/:id', function(req, res){
 app.listen(PORT, function(){
   console.log('App listening on port ' + PORT);
 });
+
+//============= DELETE INDIVIDUAL ITEMS BY ID ========//
+app.delete('/list/:id', function(req, res){
+  var itemID = parseInt(req.params.id);
+  var matching = _.findWhere(list, {id: itemID});
+  if(matching){
+  list = _.without(list, matching);
+    res.json(list);
+  } else {
+    res.status(400).send('Item not found.');
+  }
+}); //end delete
