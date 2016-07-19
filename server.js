@@ -30,7 +30,7 @@ if(!body.hasOwnProperty('description') || !_.isString(body.description)){
 }
 if(body.hasOwnProperty('due') && !_.isString(body.due)){
   return errorStatus("Something is wrong with due");
-} 
+}
 if (body.hasOwnProperty('priority') && !_.isNumber(body.priority)){
   return errorStatus("Something is wrong with priority");
 } else if(!body.hasOwnProperty('priority')){
@@ -111,3 +111,46 @@ app.delete('/list/:id', function(req, res){
     res.status(400).send('Item not found.');
   }
 }); //end delete
+
+
+//============ UPDATE ITEM (PUT) ============//
+app.put('/list/:id', function(req, res){
+  //Step 1: Figure out which item is being updated
+  var body = _.pick(req.body, 'description', 'completed','due', 'priority');
+  var itemID = Number(req.params.id);
+  var itemToChange = _.findWhere(list, {id: itemID});
+  //Step 2: Establish a new object for updated properties to attach to.
+  var validAtts = {};
+
+  //Step 3: Make sure the request is valid
+  if(!itemToChange){
+    return  res.status(404).send('No item found.');
+  }
+    //Step 3.1: Validate requested changes
+  if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
+    validAtts.completed = body.completed;
+  } else if(body.hasOwnProperty('completed')){
+    return res.status(400).send('Error: Completed must be a boolean value.');
+  }
+  if(body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0){
+    validAtts.description = body.description;
+  } else if(body.hasOwnProperty('description') && _.isString(body.description)){
+    return res.status(400).send('Error: Description length must be longer than 0 characters.')
+  }
+  if(body.hasOwnProperty('due') && _.isString(body.due)){
+    validAtts.due = body.due;
+  } else if(body.hasOwnProperty('due')){
+    return res.status(400).send('Error: Due must be a string.');
+  }
+  if(body.hasOwnProperty('priority') && _.isNumber(body.priority) && Number(body.priority) > 0 && Number(body.priority) < 4){
+    validAtts.priority = body.priority;
+  } else if(body.hasOwnProperty('priority')){
+    return res.status(400).send('Error: Priority level must be a numerical value between 1 and 3.');
+  }
+
+  //Step 4: Merge validAtts with original object
+_.extend(itemToChange, validAtts);
+
+  //Step 5: Send data
+  res.json(itemToChange);
+}); //end app.put
