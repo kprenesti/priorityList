@@ -20,7 +20,7 @@ module.exports = function(sequelize, DataTypes){
     },
     due: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
       validate: {
         isDate: true
       }
